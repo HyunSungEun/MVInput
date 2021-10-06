@@ -24,6 +24,7 @@ namespace Movements.XR.HoloLens {
         /// </summary>
         public static int ClickCount { get { return handManager.ClickCount; } }
         public static Hand GetHand(HandSide handSide) => handManager.GetHand(handSide);
+        public static Hand[] Hands { get { return handManager.Hands; } }
 
         public static bool IsInitialized
         {
@@ -69,6 +70,9 @@ namespace Movements.XR.HoloLens {
         public static void OnInputChanged(InputEventData<MixedRealityPose> eventData)
         {
             if (IsSubjectInputEventData(eventData) == false) return;
+            //if((eventData.InputData.Position - Vector3.zero).magnitude >0f) Debug.Log(Time.frameCount + "OnInputChanged" + eventData.Handedness +"_"+ eventData.MixedRealityInputAction.Description + "_" + eventData.MixedRealityInputAction.AxisConstraint.ToString() + "디버그" + getDebugString(eventData));
+            //Input Action Pointer Pose의 Pose를 핸드 Pose에 적용
+            if (eventData.MixedRealityInputAction.Description != "Pointer Pose") return;
             handManager.OnInputChanged(eventData);
         }
 
@@ -76,6 +80,8 @@ namespace Movements.XR.HoloLens {
         {
             if (IsSubjectInputEventData(eventData) == false) return;
             Debug.Log(Time.frameCount + "OnInputDown"+eventData.Handedness + eventData.MixedRealityInputAction.Description+eventData.MixedRealityInputAction.AxisConstraint.ToString()+"디버그"+ getDebugString(eventData));
+            //Input Action Select를 클릭 상태에 적용
+            if (eventData.MixedRealityInputAction.Description != "Select") return;
             handManager.OnInputDown(eventData);
         }
 
@@ -83,6 +89,8 @@ namespace Movements.XR.HoloLens {
         {
             if (IsSubjectInputEventData(eventData) == false) return;
             Debug.Log(Time.frameCount + "OnInputUp" + eventData.Handedness + eventData.MixedRealityInputAction.Description + eventData.MixedRealityInputAction.AxisConstraint.ToString() + "디버그" + getDebugString(eventData));
+
+            if (eventData.MixedRealityInputAction.Description != "Select") return;
             handManager.OnInputUp(eventData);
         }
 

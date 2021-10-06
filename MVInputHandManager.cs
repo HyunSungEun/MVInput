@@ -54,7 +54,7 @@ namespace Movements.XR.HoloLens
         {
             return hands[(int)handSide];
         } 
-
+        public Hand[] Hands { get { return hands; } }
 
 
 
@@ -95,6 +95,12 @@ namespace Movements.XR.HoloLens
             if (hand == null) return;
             Pose pose = new Pose(eventData.InputData.Position,eventData.InputData.Rotation);
             hand.SetChangedPose(pose);
+
+            //디버깅
+            if(eventData.Handedness== Handedness.Right && eventData.MixedRealityInputAction.AxisConstraint == AxisType.SixDof)
+            {
+                GameObject.Find("DebugShow")?.GetComponent<DebugShow>().DebugInputs(eventData);
+            }
         }
         /// <summary>
         /// Click State에 따라 한 프레임 뒤의 Click State Update 반영
