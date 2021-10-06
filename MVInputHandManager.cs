@@ -37,7 +37,7 @@ namespace Movements.XR.HoloLens
                 {
                     if (hand != null)
                     {
-                        switch (hand.clickState)
+                        switch (hand.HandClickState)
                         {
                             case Hand.ClickState.Down:
                             case Hand.ClickState.Clicking:
@@ -66,7 +66,7 @@ namespace Movements.XR.HoloLens
 
         public void OnInputDown(InputEventData eventData)
         {
-            Hand hand = GetHandByHandedness(eventData.Handedness);
+            Hand hand = hands[HandIdx(eventData.Handedness)];
             if (hand == null)
             {
             }
@@ -77,7 +77,7 @@ namespace Movements.XR.HoloLens
         }
         public void OnInputUp(InputEventData eventData)
         {
-            Hand hand = GetHandByHandedness(eventData.Handedness);
+            Hand hand = hands[HandIdx(eventData.Handedness)];
             if (hand == null)
             {
             }
@@ -91,20 +91,23 @@ namespace Movements.XR.HoloLens
         public void OnInputChanged(InputEventData<MixedRealityPose> eventData)
         {
             Handedness handedness = eventData.Handedness;
-            Hand hand = GetHandByHandedness(handedness);
+            Hand hand = hands[HandIdx(handedness)];
             if (hand == null) return;
             Pose pose = new Pose(eventData.InputData.Position,eventData.InputData.Rotation);
             hand.SetChangedPose(pose);
         }
-
+        /// <summary>
+        /// Click State에 따라 한 프레임 뒤의 Click State Update 반영
+        /// </summary>
         void HandStateUpdate()
         {
             foreach(Hand hand in hands)
             {
                 if (hand == null) continue;
                 //한 프레임의 LateUpdate에서 바로 State 업데이트 배제
+                //handler callback이 LateUpdate에서 들어오기 때문에 frameCount로 같은 프레임내에서 접근 방지
                 if (hand.LastClickChangedFrameCount == Time.frameCount) continue;
-                switch (hand.clickState)
+                switch (hand.HandClickState)
                 {
                     case Hand.ClickState.Down:
                         hand.SetClick(Hand.ClickState.Clicking);
@@ -115,7 +118,9 @@ namespace Movements.XR.HoloLens
                 }
             }
         }
-
+        /// <summary>
+        /// 손 인식 확인
+        /// </summary>
         void HandOnCheck()
         {
             Handedness handedness = Handedness.Left;
@@ -123,48 +128,42 @@ namespace Movements.XR.HoloLens
             {
                 if (i == 1) handedness = Handedness.Right;
 
-                Hand hand = GetHandByHandedness(handedness);
+                Hand hand = hands[HandIdx(handedness)];
+                
                 if (IsHandOn(handedness))
                 {
+                    // 인식된 손에 따라 Hand생성
                     if (hand == null)
                     {
-                      //  hand = new Hand(ProvideHandID());
-                      //  Debug.Log(handedness+"핸드 생성" + hand.ID+"핸즈"+hands[0].ID);
-                       if(handedness == Handedness.Right)
-                        {
-                            hands[1] = new Hand(ProvideHandID());
-                            Debug.Log(handedness + "핸드 생성" + "핸즈" + hands[1]?.ID);
-                        }
+                        hands[HandIdx(handedness)] = new Hand(ProvideHandID(), handedness);
+                        Debug.Log(handedness+"핸드 생성"+hands[HandIdx(handedness)].ID);
                     }
                 }
                 else
                 {
+                    //인식이 안 된 손의 Hand 제거
+                    //Hand가 클릭 상태일 때는 Up 이벤트를 Raise하고 제거 
                     if (hand != null)
                     {
-                        Debug.Log("제거 dkdlel="+hand.ID);
-                        switch (hand.clickState)
+                        Debug.Log(handedness + "핸드 제거" + hand.ID + "클릭스테이트" + hand.HandClickState);
+                        switch (hand.HandClickState)
                         {
                             case Hand.ClickState.None:
-                                Debug.Log(handedness + "핸드 제거" + hand.ID+"클릭스테이트"+ hand.clickState);
-                                if (handedness == Handedness.Right)
-                                {
-                                    hands[1] = null;
-                                }
+                                hands[HandIdx(handedness)] = null;
                                 break;
                             case Hand.ClickState.Down:
+                                hand.SetClick(Hand.ClickState.Up);
                                 hand.RaiseHandClickUp();
-                                hand = null;
+                                hands[HandIdx(handedness)] = null;
                                 break;
                             case Hand.ClickState.Clicking:
+                                hand.SetClick(Hand.ClickState.Up);
                                 hand.RaiseHandClickUp();
-                                hand = null;
+                                hands[HandIdx(handedness)] = null;
                                 break;
+                            //OnInputUp에서 이미 Click Up Event Raise 발생했으므로 hand.RaiseHandClickUp(); 생략
                             case Hand.ClickState.Up:
-                                Debug.Log(handedness + "핸드 제거" + hand.ID + "클릭스테이트" + hand.clickState);
-                                if (handedness == Handedness.Right)
-                                {
-                                    hands[1] = null;
-                                }
+                                hands[HandIdx(handedness)] = null;
                                 break;
                         }
                     }
@@ -186,21 +185,21 @@ namespace Movements.XR.HoloLens
         }
 
 
-        Hand GetHandByHandedness(Microsoft.MixedReality.Toolkit.Utilities.Handedness handedness)
+        int HandIdx(Microsoft.MixedReality.Toolkit.Utilities.Handedness handedness)
         {
             switch (handedness)
             {
                 case Handedness.Left:
-                    return hands[(int)Hand.ConvertHand(Handedness.Left)];
+                    return (int)Hand.ConvertHand(Handedness.Left);
                 case Handedness.Right:
-                    return hands[(int)Hand.ConvertHand(Handedness.Right)];
+                    return (int)Hand.ConvertHand(Handedness.Right);
                 case Handedness.None:
                 case Handedness.Both:
                 case Handedness.Other:
                 case Handedness.Any:
                     break;
             }
-            return null;
+            return 0;
         }
 
         bool IsHandOn(Handedness handedness)

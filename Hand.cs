@@ -5,30 +5,58 @@ namespace Movements.XR.HoloLens
 {
     public class Hand
     {
-        public Hand(int handID)
+        public Hand(int handID,HandSide handSide)
         {
             this.id = handID;
+            this.handSide = handSide;
             clickState = ClickState.None;
         }
+        public Hand(int handID, Microsoft.MixedReality.Toolkit.Utilities.Handedness handSide) : this(handID, ConvertHand(handSide)) { }
+       
         int id;
         public int ID { get { return id; } }
-        public Pose rawPose;
+        HandSide handSide;
+        public HandSide HandSide { get { return handSide; } }
+       
+        Pose rawPose;
+        /// <summary>
+        /// 클릭 시점의 Pose
+        /// </summary>
+        public Pose RawPose { get { return rawPose; } }
+        /// <summary>
+        /// 클릭 시점의 Pos의 forward
+        /// </summary>
         public Vector3 forward { get { return rawPose.forward; } }
+        /// <summary>
+        /// 클릭 시점의 Pos의 up
+        /// </summary>
         public Vector3 up { get { return rawPose.up; } }
+        /// <summary>
+        /// 클릭 시점의 Pos의 right
+        /// </summary>
         public Vector3 right { get { return rawPose.right; } }
-        public Vector3 deltaPosition;
+        Vector3 deltaPosition;
+        /// <summary>
+        /// 직전 프레임 대비 현재 이동한 Position
+        /// </summary>
+        public Vector3 DeltaPosition { get { return deltaPosition; } }
         public Vector3 rawPosition { get { return rawPose.position; } }
-        public ClickState clickState;
+        ClickState clickState;
+        public ClickState HandClickState { get { return clickState; } }
         float lastClickChangedFrameCount;
+        /// <summary>
+        /// ClickState 변화가 마지막으로 일어난 frameCount
+        /// </summary>
         public float LastClickChangedFrameCount { get { return lastClickChangedFrameCount; } }
 
         System.Action ClickUpEvent;
 
         Pose changedPose;
+        
         public void SetChangedPose(Pose pose) {
             if(clickState== ClickState.Clicking)
             {
-                deltaPosition = pose.position = changedPose.position;
+                deltaPosition = pose.position - changedPose.position;
             }
             changedPose = pose;
         }
@@ -37,26 +65,23 @@ namespace Movements.XR.HoloLens
             if (subscribe) ClickUpEvent += callback;
             else ClickUpEvent -= callback;
         }
-
+        /// <summary>
+        /// Click Up 이벤트 Raise
+        /// </summary>
         public void RaiseHandClickUp()
         {
-            clickState = ClickState.Up;
             if(ClickUpEvent!=null) ClickUpEvent();
         }
 
-        public string GetDebugString()
-        {
-            string result = string.Empty;
-            if (clickState == ClickState.None)
-            {
-
-            }
-            return result;
-        }
+       
         public void SetClick(ClickState state)
         {
             switch (state)
             {
+                case ClickState.None:
+                    clickState = ClickState.None;
+                    lastClickChangedFrameCount = Time.frameCount;
+                    break;
                 case ClickState.Down:
                     clickState = ClickState.Down;
                     lastClickChangedFrameCount = Time.frameCount;
@@ -93,6 +118,12 @@ namespace Movements.XR.HoloLens
                     result = HandSide.Right;
                     break;
             }
+            return result;
+        } 
+        public string GetDebugString()
+        {
+            string result = string.Empty;
+            result = string.Format("{0}_{1}_Click:{2}_Raw:{3}_delta:{4}_lastFrame:{5}", handSide.ToString(), id, clickState.ToString(), rawPose.PoseStr(), deltaPosition.V3Str(), lastClickChangedFrameCount);
             return result;
         }
     }

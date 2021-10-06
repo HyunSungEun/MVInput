@@ -10,6 +10,9 @@ using TMPro;
 
 namespace Movements.XR.HoloLens
 {
+    /// <summary>
+    /// MVInput에 Handler 넘겨주는 역할
+    /// </summary>
     public class MVInputMonoTosser : MonoBehaviour, IMixedRealityInputHandler, IMixedRealityInputHandler<MixedRealityPose>
     {
         static MVInputMonoTosser _instance=null;
@@ -43,7 +46,7 @@ namespace Movements.XR.HoloLens
 
         void Update() => MVInput.Update();
         private void LateUpdate() => MVInput.LateUpdate();
-        //LateUpdate 후의 콜백이지만 렌더러가 있어야 가능
+        //LateUpdate 후의 유니티 콜백이지만 렌더러가 있어야 가능
         private void OnPreCull()    => MVInput.OnPreCull();
 
         

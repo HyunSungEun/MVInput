@@ -15,8 +15,13 @@ namespace Movements.XR.HoloLens {
     {
         static GameObject monoTosser;
         static MVInputHandManager handManager;
-
+        /// <summary>
+        /// 인식된 손의 개수
+        /// </summary>
         public static int HandCount { get { return handManager.HandCount; } }
+        /// <summary>
+        /// 클릭 처리 중인 손의 개수
+        /// </summary>
         public static int ClickCount { get { return handManager.ClickCount; } }
         public static Hand GetHand(HandSide handSide) => handManager.GetHand(handSide);
 
@@ -63,30 +68,37 @@ namespace Movements.XR.HoloLens {
 
         public static void OnInputChanged(InputEventData<MixedRealityPose> eventData)
         {
-            if (eventData.InputSource.SourceType != InputSourceType.Hand) return;
-            if (!(eventData.Handedness == Handedness.Left || eventData.Handedness == Handedness.Right)) return;
+            if (IsSubjectInputEventData(eventData) == false) return;
             handManager.OnInputChanged(eventData);
         }
 
         public static void OnInputDown(InputEventData eventData)
         {
-            if (eventData.InputSource.SourceType != InputSourceType.Hand) return;
-            if (!(eventData.Handedness == Handedness.Left || eventData.Handedness == Handedness.Right)) return;
-            Debug.Log(Time.frameCount + "OnInputDown"+eventData.Handedness + eventData.MixedRealityInputAction.Description);
+            if (IsSubjectInputEventData(eventData) == false) return;
+            Debug.Log(Time.frameCount + "OnInputDown"+eventData.Handedness + eventData.MixedRealityInputAction.Description+eventData.MixedRealityInputAction.AxisConstraint.ToString()+"디버그"+ getDebugString(eventData));
             handManager.OnInputDown(eventData);
         }
 
         public static void OnInputUp(InputEventData eventData)
         {
-            if (eventData.InputSource.SourceType != InputSourceType.Hand) return;
-            if (!(eventData.Handedness == Handedness.Left || eventData.Handedness == Handedness.Right)) return;
-            Debug.Log(Time.frameCount + "OnInputUp" + eventData.Handedness + eventData.MixedRealityInputAction.Description);
+            if (IsSubjectInputEventData(eventData) == false) return;
+            Debug.Log(Time.frameCount + "OnInputUp" + eventData.Handedness + eventData.MixedRealityInputAction.Description + eventData.MixedRealityInputAction.AxisConstraint.ToString() + "디버그" + getDebugString(eventData));
             handManager.OnInputUp(eventData);
         }
 
+        /// <summary>
+        /// MVInput에서 InputEventData 조건 확인 후 HandManager Call
+        /// </summary>
+        /// <param name="eventData"></param>
+        /// <returns></returns>
+        static bool IsSubjectInputEventData(InputEventData eventData)
+        {
+            if (eventData.InputSource.SourceType != InputSourceType.Hand) return false;
+            if (!(eventData.Handedness == Handedness.Left || eventData.Handedness == Handedness.Right)) return false;
+            return true;
+        }
 
-
-        string getDebugString(InputEventData e)
+        static string getDebugString(InputEventData e)
         {
             UnityEngine.EventSystems.BaseInputModule baseInputModule =  e.currentInputModule;
             DateTime d = e.EventTime;
@@ -98,7 +110,5 @@ namespace Movements.XR.HoloLens {
             return string.Format("Time_{0},{1},baseName_{2},sId_{3},sname{4},sType{5},actionDesc_{6},actionId_{7},actionAxis_{8}", d, hand.ToString(), baseInputModule.name, s.SourceId, s.SourceName, s.SourceType
                 , action.Description, action.Id, action.AxisConstraint.ToString());
         }
-
-
     }
 }
