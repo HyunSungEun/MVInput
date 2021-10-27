@@ -10,6 +10,8 @@ namespace Movements.XR.HoloLens
             this.id = handID;
             this.handSide = handSide;
             clickState = ClickState.None;
+            NowActions = new List<MVInputAction>();
+            StateStack = new Stack<ClickState>();
         }
         public Hand(int handID, Microsoft.MixedReality.Toolkit.Utilities.Handedness handSide) : this(handID, ConvertHand(handSide)) { }
        
@@ -43,16 +45,19 @@ namespace Movements.XR.HoloLens
         public Vector3 rawPosition { get { return rawPose.position; } }
         ClickState clickState;
         public ClickState HandClickState { get { return clickState; } }
-        float lastClickChangedFrameCount;
+
+        float lastDownTime;
         /// <summary>
         /// ClickState 변화가 마지막으로 일어난 frameCount
         /// </summary>
-        public float LastClickChangedFrameCount { get { return lastClickChangedFrameCount; } }
+        public float LastDownTime { get { return lastDownTime; } }
 
         System.Action ClickUpEvent;
 
         Pose changedPose;
-        
+        public List<MVInputAction> NowActions;
+        public Stack<ClickState> StateStack;
+
         public void SetChangedPose(Pose pose) {
             if(clickState== ClickState.Clicking)
             {
@@ -80,20 +85,19 @@ namespace Movements.XR.HoloLens
             {
                 case ClickState.None:
                     clickState = ClickState.None;
-                    lastClickChangedFrameCount = Time.frameCount;
                     break;
                 case ClickState.Down:
                     clickState = ClickState.Down;
-                    lastClickChangedFrameCount = Time.frameCount;
+                    lastDownTime = Time.time;
                     rawPose = changedPose;
+                    StateStack.Push(ClickState.Down);
                     break;
                 case ClickState.Clicking:
                     clickState = ClickState.Clicking;
-                    lastClickChangedFrameCount = Time.frameCount;
+                    StateStack.Push(ClickState.Clicking);
                     break;
                 case ClickState.Up:
                     clickState = ClickState.Up;
-                    lastClickChangedFrameCount = Time.frameCount;
                     break;
             }
         }
@@ -123,7 +127,7 @@ namespace Movements.XR.HoloLens
         public string GetDebugString()
         {
             string result = string.Empty;
-            result = string.Format("{0}_{1}_Click:{2}_Raw:{3}_delta:{4}_lastFrame:{5}", handSide.ToString(), id, clickState.ToString(), rawPose.PoseStr(), deltaPosition.V3Str(), lastClickChangedFrameCount);
+            result = string.Format("{0}_{1}_Click:{2}_Raw:{3}_delta:{4}_lastFrame:{5}", handSide.ToString(), id, clickState.ToString(), rawPose.PoseStr(), deltaPosition.V3Str(), lastDownTime);
             return result;
         }
     }

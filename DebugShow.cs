@@ -14,8 +14,13 @@ public class DebugShow : MonoBehaviour
     public TextMeshPro debugScreenHand;
     public TextMeshPro debugScreenPointerHandleLeft;
     public TextMeshPro debugScreenPointerHandleRight;
+
+    public TextMeshPro debugActionTxt;
+
     public GameObject LPosDebug;
     public GameObject RPosDebug;
+
+
     private void Update()
     {
         debugScreen.text= string.Format("HC_{0},CC_{1}", MVInput.HandCount, MVInput.ClickCount);

@@ -13,10 +13,5 @@ namespace Movements.XR.HoloLens
             MVInput.Initialize();
         }
 
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
     }
 }

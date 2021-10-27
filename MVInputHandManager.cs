@@ -1,27 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR.OpenXR;
-//using Microsoft.MixedReality.OpenXR;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities;
-using Microsoft.MixedReality.Toolkit;
-using System;
-using System.Text;
-
 
 namespace Movements.XR.HoloLens
 {
-    public class MVInputHandManager 
+    public class MVInputHandManager
     {
         Hand[] hands;
 
         public int HandCount
         {
-            get 
+            get
             {
                 int result = 0;
-                foreach(Hand hand in hands)
+                foreach (Hand hand in hands)
                 {
                     if (hand != null) result++;
                 }
@@ -53,7 +47,7 @@ namespace Movements.XR.HoloLens
         public Hand GetHand(HandSide handSide)
         {
             return hands[(int)handSide];
-        } 
+        }
         public Hand[] Hands { get { return hands; } }
 
 
@@ -93,41 +87,85 @@ namespace Movements.XR.HoloLens
             Handedness handedness = eventData.Handedness;
             Hand hand = hands[HandIdx(handedness)];
             if (hand == null) return;
-            Pose pose = new Pose(eventData.InputData.Position,eventData.InputData.Rotation);
+            Pose pose = new Pose(eventData.InputData.Position, eventData.InputData.Rotation);
             hand.SetChangedPose(pose);
 
             //디버깅
-            if(eventData.Handedness== Handedness.Right && eventData.MixedRealityInputAction.AxisConstraint == AxisType.SixDof)
+            if (eventData.Handedness == Handedness.Right && eventData.MixedRealityInputAction.AxisConstraint == AxisType.SixDof)
             {
                 GameObject.Find("DebugShow")?.GetComponent<DebugShow>().DebugInputs(eventData);
             }
         }
         /// <summary>
-        /// Click State에 따라 한 프레임 뒤의 Click State Update 반영
+        /// Click State에 따라 threshold 뒤의 Click State Update 반영
         /// </summary>
         void HandStateUpdate()
         {
-            foreach(Hand hand in hands)
+            foreach (Hand hand in hands)
             {
                 if (hand == null) continue;
-                //한 프레임의 LateUpdate에서 바로 State 업데이트 배제
-                //handler callback이 LateUpdate에서 들어오기 때문에 frameCount로 같은 프레임내에서 접근 방지
-                if (hand.LastClickChangedFrameCount == Time.frameCount) continue;
                 switch (hand.HandClickState)
                 {
                     case Hand.ClickState.Down:
+
+                        //Down 후 HoldStartDuration 까지 Up이 아닌 경우 "Hold" InputAction 
+                        if (hand.LastDownTime + MVInput.HoldStartDuration > Time.time) continue;
                         hand.SetClick(Hand.ClickState.Clicking);
+                        hand.NowActions.Add(new MVInputAction("Hold", Time.frameCount, Time.time));
+
+
+                        GameObject.FindObjectOfType<DebugShow>().debugActionTxt.text += Time.frameCount + "Hold";
+
+
                         break;
                     case Hand.ClickState.Up:
+                        //Up 후 이전 상태에 따라 처리
+                            switch (hand.StateStack.Pop())
+                            {
+                                case Hand.ClickState.Down:
+                                //Down 후 Hold로 상태 변화 전에 UP일 시 "Click" InputAction 
+                                if (hand.LastDownTime + MVInput.HoldStartDuration > Time.time)
+                                {
+                                    hand.NowActions.Add(new MVInputAction("Click", Time.frameCount, Time.time));
+
+
+
+                                    GameObject.FindObjectOfType<DebugShow>().debugActionTxt.text += Time.frameCount + "Click";
+
+                                }
+                                    break;
+                                case Hand.ClickState.Clicking:
+                                //이전 상태 Clicking (InputAction Hold) 인 경우 Hold 종료
+                                    hand.NowActions.Clear();
+
+                                GameObject.FindObjectOfType<DebugShow>().debugActionTxt.text += Time.frameCount + "HoldOUT";
+                               
+                                break;
+                            }
+                        
                         hand.SetClick(Hand.ClickState.None);
                         break;
                 }
+               
+                for(int i = 0; i < hand.NowActions.Count; i++)
+                {
+                    //한 프레임 내에서 Click 액션 종료 배제
+                    if (hand.NowActions[i].CreatedFrameCount == Time.frameCount) continue;
+                    if (hand.NowActions[i].Description == "Click")
+                    {
+                        //Click 액션 (Like MRTK에서 Select 액션, 일반적인 경우 GetDown())은 한 프레임 후 종료 
+                        hand.NowActions.RemoveAt(i);
+
+                        GameObject.FindObjectOfType<DebugShow>().debugActionTxt.text += Time.frameCount + "ClickOUT";
+                    }
+                } 
             }
         }
-        /// <summary>
-        /// 손 인식 확인
-        /// </summary>
-        void HandOnCheck()
+    
+            /// <summary>
+            /// 손 인식 확인
+            /// </summary>
+            void HandOnCheck()
         {
             Handedness handedness = Handedness.Left;
             for (int i = 0; i < 2; i++)
@@ -213,5 +251,6 @@ namespace Movements.XR.HoloLens
             Ray ray;
             return InputRayUtils.TryGetHandRay(handedness, out ray);
         }
+        
     }
 }

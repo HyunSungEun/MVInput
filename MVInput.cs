@@ -1,18 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR.OpenXR;
-//using Microsoft.MixedReality.OpenXR;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities;
-using Microsoft.MixedReality.Toolkit;
 using System;
-using System.Text;
 
 
 namespace Movements.XR.HoloLens {
     public class MVInput : UnityEngine.Input
     {
+        public static readonly float HoldStartDuration = 0.5f;//MRTK MixedRealityInputSimulationProfile.HoldStartDuration 프로퍼티 참고
         static GameObject monoTosser;
         static MVInputHandManager handManager;
         /// <summary>
@@ -75,27 +72,33 @@ namespace Movements.XR.HoloLens {
             if (eventData.MixedRealityInputAction.Description != "Pointer Pose") return;
             handManager.OnInputChanged(eventData);
         }
-
+        /// <summary>
+        /// Pinch 시 Called by MRTK 
+        /// </summary>
+        /// <param name="eventData"></param>
         public static void OnInputDown(InputEventData eventData)
         {
             if (IsSubjectInputEventData(eventData) == false) return;
-            Debug.Log(Time.frameCount + "OnInputDown"+eventData.Handedness + eventData.MixedRealityInputAction.Description+eventData.MixedRealityInputAction.AxisConstraint.ToString()+"디버그"+ getDebugString(eventData));
+          //  Debug.Log(Time.frameCount + "OnInputDown"+eventData.Handedness + eventData.MixedRealityInputAction.Description+eventData.MixedRealityInputAction.AxisConstraint.ToString()+"디버그"+ getDebugString(eventData));
             //Input Action Select를 클릭 상태에 적용
             if (eventData.MixedRealityInputAction.Description != "Select") return;
             handManager.OnInputDown(eventData);
         }
-
+        /// <summary>
+        /// Pinch 후 종료 시  Called by MRTK 
+        /// </summary>
+        /// <param name="eventData"></param>
         public static void OnInputUp(InputEventData eventData)
         {
             if (IsSubjectInputEventData(eventData) == false) return;
-            Debug.Log(Time.frameCount + "OnInputUp" + eventData.Handedness + eventData.MixedRealityInputAction.Description + eventData.MixedRealityInputAction.AxisConstraint.ToString() + "디버그" + getDebugString(eventData));
+           // Debug.Log(Time.frameCount + "OnInputUp" + eventData.Handedness + eventData.MixedRealityInputAction.Description + eventData.MixedRealityInputAction.AxisConstraint.ToString() + "디버그" + getDebugString(eventData));
 
             if (eventData.MixedRealityInputAction.Description != "Select") return;
             handManager.OnInputUp(eventData);
         }
 
         /// <summary>
-        /// MVInput에서 InputEventData 조건 확인 후 HandManager Call
+        ///  HandManager Call 전 MVInput에서 InputEventData 조건 확인
         /// </summary>
         /// <param name="eventData"></param>
         /// <returns></returns>
