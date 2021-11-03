@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Movements.XR.HoloLens
+namespace Movements.XR.Input
 {
     public class Hand
     {
@@ -13,7 +13,6 @@ namespace Movements.XR.HoloLens
             NowActions = new List<MVInputAction>();
             StateStack = new Stack<ClickState>();
         }
-        public Hand(int handID, Microsoft.MixedReality.Toolkit.Utilities.Handedness handSide) : this(handID, ConvertHand(handSide)) { }
        
         int id;
         public int ID { get { return id; } }
@@ -52,11 +51,13 @@ namespace Movements.XR.HoloLens
         /// </summary>
         public float LastDownTime { get { return lastDownTime; } }
 
-        System.Action ClickUpEvent;
-
         Pose changedPose;
+        public Pose NowPose { get { return changedPose; } }
         public List<MVInputAction> NowActions;
         public Stack<ClickState> StateStack;
+
+        //MVHold Started Handler
+        public IMVInteractableEventHandler BeHoldingHandler;
 
         public void SetChangedPose(Pose pose) {
             if(clickState== ClickState.Clicking)
@@ -65,19 +66,6 @@ namespace Movements.XR.HoloLens
             }
             changedPose = pose;
         }
-
-        public void RagisterClickUpHandler(bool subscribe, System.Action callback) {
-            if (subscribe) ClickUpEvent += callback;
-            else ClickUpEvent -= callback;
-        }
-        /// <summary>
-        /// Click Up ¿Ã∫•∆Æ Raise
-        /// </summary>
-        public void RaiseHandClickUp()
-        {
-            if(ClickUpEvent!=null) ClickUpEvent();
-        }
-
        
         public void SetClick(ClickState state)
         {
@@ -110,27 +98,16 @@ namespace Movements.XR.HoloLens
             Up,
             Max
         }
-        public static HandSide ConvertHand(Microsoft.MixedReality.Toolkit.Utilities.Handedness handedness)
-        {
-            HandSide result = HandSide.None;
-            switch (handedness)
-            {
-                case Microsoft.MixedReality.Toolkit.Utilities.Handedness.Left:
-                    result = HandSide.Left;
-                    break;
-                case Microsoft.MixedReality.Toolkit.Utilities.Handedness.Right:
-                    result = HandSide.Right;
-                    break;
-            }
-            return result;
-        } 
+
         public string GetDebugString()
         {
             string result = string.Empty;
             result = string.Format("{0}_{1}_Click:{2}_Raw:{3}_delta:{4}_lastFrame:{5}", handSide.ToString(), id, clickState.ToString(), rawPose.PoseStr(), deltaPosition.V3Str(), lastDownTime);
             return result;
         }
+
     }
+
 
     public enum HandSide
     {
