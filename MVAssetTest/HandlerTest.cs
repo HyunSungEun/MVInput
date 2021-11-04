@@ -41,6 +41,7 @@ public class HandlerTest : MonoBehaviour , IMVInteractableEventHandler
 
     private void Update()
     {
+        if (MVInput.Hands == null) return;
         int i = 0;
         foreach(Hand hand in  MVInput.Hands)
         {
