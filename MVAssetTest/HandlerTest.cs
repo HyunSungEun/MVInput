@@ -12,18 +12,18 @@ public class HandlerTest : MonoBehaviour , IMVInteractableEventHandler
         return true;
     }
 
-    void IMVInteractableEventHandler.OnInteractableCanceled(MVInputAction action, MVInputEventData eventData)
+    void IMVInteractableEventHandler.OnInteractableCanceled(MVInputAction action, MVInteractableEventData eventData)
     {
         mat.color = Color.magenta;
     }
 
-    void IMVInteractableEventHandler.OnInteractableChanged(MVInputAction action, MVInputEventData<Pose> eventData)
+    void IMVInteractableEventHandler.OnInteractableDragged(MVInputAction action, MVInteractableEventData<Pose> eventData)
     {
         if (changedMat.color == Color.yellow) changedMat.color = Color.black;
         else changedMat.color = Color.yellow;
     }
 
-    void IMVInteractableEventHandler.OnInteractableCompleted(MVInputAction action, MVInputEventData eventData)
+    void IMVInteractableEventHandler.OnInteractableCompleted(MVInputAction action, MVInteractableEventData eventData)
     {
         if (action.Description == "MVClick")
         {
@@ -34,7 +34,7 @@ public class HandlerTest : MonoBehaviour , IMVInteractableEventHandler
         if (action.Description == "MVHold") mat.color = Color.green;
     }
 
-    void IMVInteractableEventHandler.OnInteractableStarted(MVInputAction action, MVInputEventData eventData)
+    void IMVInteractableEventHandler.OnInteractableStarted(MVInputAction action, MVInteractableEventData eventData)
     {
         if (action.Description == "MVHold") mat.color = Color.blue;
     }

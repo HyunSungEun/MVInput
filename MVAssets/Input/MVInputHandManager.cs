@@ -114,7 +114,7 @@ namespace Movements.XR.Input
             {
                 if (action.Description =="MVHold")
                 {
-                    MVInput.InteractableService.RaiseOnInteractableChangedEvent(hand, action);
+                    MVInput.InteractableService.RaiseOnInteractableDraggedEvent(hand, action);
                 }
             }
         }

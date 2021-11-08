@@ -7,9 +7,9 @@ namespace Movements.XR.Input {
     public interface IMVInteractableEventHandler : IEventSystemHandler
     {
         public bool IsHoldAcceptable();
-        public void OnInteractableStarted(     MVInputAction action, MVInputEventData eventData        );
-        public void OnInteractableChanged(     MVInputAction action, MVInputEventData<Pose> eventData  );
-        public void OnInteractableCompleted(   MVInputAction action, MVInputEventData eventData        );
-        public void OnInteractableCanceled(    MVInputAction action, MVInputEventData eventData        );
+        public void OnInteractableStarted(     MVInputAction action, MVInteractableEventData eventData        ); // MVInteractableEventData로 수정 요
+        public void OnInteractableDragged(     MVInputAction action, MVInteractableEventData<Pose> eventData  );
+        public void OnInteractableCompleted(   MVInputAction action, MVInteractableEventData eventData        );
+        public void OnInteractableCanceled(    MVInputAction action, MVInteractableEventData eventData        );
     }
 }

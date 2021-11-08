@@ -32,14 +32,14 @@ namespace Movements.XR.Input {
                 
                 if (action.Description == "MVHold" && handler.IsHoldAcceptable() == false) return;
 
-                handler.OnInteractableStarted(action, new MVInputEventData(hand.HandSide));
+                handler.OnInteractableStarted(action, new MVInteractableEventData(hand));
                 hand.BeHoldingHandler = handler;
             }
-            public static void RaiseOnInteractableChangedEvent(Hand hand, MVInputAction action)
+            public static void RaiseOnInteractableDraggedEvent(Hand hand, MVInputAction action)
             {
                 if (hand == null) return;
                 if (hand.BeHoldingHandler == null) return;
-                hand.BeHoldingHandler.OnInteractableChanged(action, new MVInputEventData<Pose>( hand.HandSide,hand.NowPose));
+                hand.BeHoldingHandler.OnInteractableDragged(action, new MVInteractableEventData<Pose>(new Pose(), hand));
             }
             public static void RaiseOnInteractableCompletedEvent(Hand hand, MVInputAction action)
             {
@@ -47,20 +47,20 @@ namespace Movements.XR.Input {
                 if (action.Description == "MVHold")
                 {
                     if (hand.BeHoldingHandler == null) return;
-                    hand.BeHoldingHandler.OnInteractableCompleted(action, new MVInputEventData(hand.HandSide));
+                    hand.BeHoldingHandler.OnInteractableCompleted(action, new MVInteractableEventData(hand));
                     hand.BeHoldingHandler = null;
                     return;
                 }
                 IMVInteractableEventHandler handler = GetMVInteractableEventHandlerByHandRay(hand);
                 if (handler == null) return;
-                handler.OnInteractableCompleted(action, new MVInputEventData(hand.HandSide));
+                handler.OnInteractableCompleted(action, new MVInteractableEventData(hand));
             }
             public static void RaiseOnInteractableCanceledEvent(Hand hand, MVInputAction action)
             {
                 if (hand == null) return;
                 if (action.Description == "MVHold" && hand.BeHoldingHandler != null )
                 {
-                    hand.BeHoldingHandler.OnInteractableCanceled(action, new MVInputEventData(hand.HandSide));
+                    hand.BeHoldingHandler.OnInteractableCanceled(action, new MVInteractableEventData(hand));
                 }
                 hand.BeHoldingHandler = null;
             }
@@ -69,7 +69,7 @@ namespace Movements.XR.Input {
             {
                 if (hand == null) return null;
                 RaycastHit hit;
-                Ray ray = new Ray(hand.NowPose.position + hand.NowPose.forward*0.05f, hand.NowPose.forward);
+                Ray ray = GetHandRay(hand);
                 bool raycast =  Physics.Raycast(ray, out hit, InteractableFindRayMaxLength);
 
                 if (raycast) {
@@ -80,6 +80,13 @@ namespace Movements.XR.Input {
 
                 return hit.collider.gameObject.GetComponent<IMVInteractableEventHandler>();
             }
+
+            public static Ray GetHandRay(Hand hand)
+            {
+                if (hand == null) return default(Ray);
+                Ray ray = new Ray(hand.NowPose.position + hand.NowPose.forward * 0.05f, hand.NowPose.forward);
+                return ray;
+            } 
         }
 
         static MVInputMode inputMode;
